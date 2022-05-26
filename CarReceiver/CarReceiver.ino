@@ -1,11 +1,11 @@
+#include <Adafruit_Soundboard.h>
 #include <SPI.h>
 #include <RH_RF69.h>
 #include <RHReliableDatagram.h>
 #include <SoftwareSerial.h>
-#include "Adafruit_Soundboard.h"
 
 /************ Car ***************/
-#define CAR_ID 'C'
+#define CAR_ID 'L'
 
 /************ SFX Setup ***************/
 // Connect to the RST pin on the Sound Board
@@ -154,8 +154,6 @@ void setup()
 }
 
 // Dont put this on the stack:
-uint8_t data[] = "And hello back to you";
-// Dont put this on the stack:
 uint8_t buf[RH_RF69_MAX_MESSAGE_LEN];
 
 void loop()
@@ -185,38 +183,8 @@ void loop()
       Serial.print(" message ");
       Serial.println(message);
 
-      // Both cars are online, so play the joint sound effects
-      if (areBothCarsOnline())
-      {
-        int n = String(message).toInt() + 10;
-        Serial.print("playing both cars ");
-        Serial.println(n);
-
-        if (!sfx.playTrack((uint8_t)n))
-        {
-          Serial.println("Failed to play track?");
-        }
-
-        Blink(LED, 10, 2);
-      }
-
-      // Play this car's sound effects
-      else if (prefix == CAR_ID)
-      {
-        int n = String(message).toInt();
-        Serial.print("playing track ");
-        Serial.println(n);
-
-        if (!sfx.playTrack((uint8_t)n))
-        {
-          Serial.println("Failed to play track?");
-        }
-
-        Blink(LED, 10, 2);
-      }
-
       // If we get an online message, save the timestamp so we can know the car is online
-      else if (prefix == 'O')
+      if (prefix == 'O')
       {
         if (message == 'L')
         {
@@ -228,11 +196,48 @@ void loop()
         }
 
         Blink(LED, 10, 2);
+        return;
       }
 
-      // Send a reply back to the originator client
-      //      if (!rf69_manager.sendtoWait(data, sizeof(data), from))
-      //        Serial.println("Sending failed (no ack)");
+      // Both cars are online, so play the joint sound effects
+      if (areBothCarsOnline())
+      {
+        char filename[12];
+        String track = String(message) + "BOTH000OGG";
+        track.toCharArray(filename, 12);
+
+        if (sfx.playTrack(filename))
+        {
+          Serial.print("playing both cars ");
+          Serial.println(filename);
+          Blink(LED, 10, 2);
+          return;
+        }
+        else
+        {
+          Serial.print("Failed to play track name ");
+          Serial.println(filename);
+        }
+      }
+
+      // Play this car's sound effects
+      if (prefix == CAR_ID)
+      {
+        int n = String(message).toInt();
+
+        if (sfx.playTrack((uint8_t)n))
+        {
+          Serial.print("playing track ");
+          Serial.println(n);
+          Blink(LED, 10, 2);
+          return;
+        }
+        else
+        {
+          Serial.print("Failed to play track number ");
+          Serial.println(n);
+        }
+      }
     }
   }
 }
