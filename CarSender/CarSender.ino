@@ -277,9 +277,12 @@ void ButtonPress(int button)
   SendMessage(msg);
 }
 
-void SendMessage(char radiopacket[1])
+void SendMessage(String message)
 {
-  itoa(packetnum++, radiopacket + 13, 10);
+  int str_len = message.length() + 1; 
+  char radiopacket[str_len];
+  message.toCharArray(radiopacket, str_len);
+  packetnum++;
   Serial.print("Sending ");
   Serial.println(radiopacket);
 

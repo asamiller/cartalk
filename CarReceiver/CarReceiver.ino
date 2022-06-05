@@ -5,7 +5,7 @@
 #include <SoftwareSerial.h>
 
 /************ Car ***************/
-#define CAR_ID 'L'
+#define CAR_ID 'C'
 
 /************ SFX Setup ***************/
 // Connect to the RST pin on the Sound Board
@@ -200,10 +200,12 @@ void loop()
       }
 
       // Both cars are online, so play the joint sound effects
-      if (areBothCarsOnline())
+      // but only if Cruz is triggering them.
+      if (areBothCarsOnline() && prefix == 'C')
       {
+        Serial.println("both cars are online");
         char filename[12];
-        String track = String(message) + "BOTH000OGG";
+        String track = String(CAR_ID) + "BOTH00" + String(message) + "OGG";
         track.toCharArray(filename, 12);
 
         if (sfx.playTrack(filename))
@@ -223,19 +225,22 @@ void loop()
       // Play this car's sound effects
       if (prefix == CAR_ID)
       {
-        int n = String(message).toInt();
+        Serial.println("playing single car");
+        char filename[12];
+        String track = String(CAR_ID) + "000000" + String(message) + "OGG";
+        track.toCharArray(filename, 12);
 
-        if (sfx.playTrack((uint8_t)n))
+        if (sfx.playTrack(filename))
         {
-          Serial.print("playing track ");
-          Serial.println(n);
+          Serial.print("playing both cars ");
+          Serial.println(filename);
           Blink(LED, 10, 2);
           return;
         }
         else
         {
-          Serial.print("Failed to play track number ");
-          Serial.println(n);
+          Serial.print("Failed to play track ");
+          Serial.println(filename);
         }
       }
     }
